@@ -1,0 +1,549 @@
+第一次实验
+一、实验内容
+数据库表的建立与管理
+
+二、实验目的
+学习数据库及表的建立、删除、更新等操作。
+
+三、实验题目及解答
+1、	创建一名为‘test’的数据库;
+CREATE DATABASE test;
+SHOW DATABASES;
+ 
+
+2.在“test”数据库中新建一张部门表 “部门”，输入列：name（char，10位），ID（char，7位），manager (char,10位)各列均不能为空值。
+USE test;
+CREATE TABLE department
+(name CHAR(10) NOT NULL,
+ID CHAR(7) NOT NULL,
+manager CHAR(10) NOT NULL
+);
+DESC department;
+ 
+
+3、在“test”数据库中新建一张员工表，命名为“员工”。在表中输入以下各列： name（char，10位），personID（char，7位），Sex（char，7位），birthday（datetime），deptID（char，7位），各列均不能为空值。
+CREATE TABLE employee
+(name CHAR(10) NOT NULL,
+personID CHAR(7) NOT NULL,
+Sex CHAR(7) NOT NULL,
+birthday DATETIME NOT NULL,
+deptID CHAR(7) NOT NULL
+);
+DESC employee;
+ 
+
+4、修改表的操作练习：
+1）将‘部门’表中的列ID设为主键；
+2）将‘员工’表中personID设为主键，并将deptID设置为外键，关联到‘部门’表上的‘ID’列；
+3）在‘部门’表中，添加列quantity(char, 5)；
+4) 删除‘员工’表中的列‘sex’；
+5）修改‘员工’表中列name为（varchar,8）
+
+ALTER TABLE department ADD PRIMARY KEY (ID);
+ALTER TABLE employee ADD PRIMARY KEY (personID);
+ALTER TABLE employee ADD FOREIGN KEY (deptID) REFERENCES department (ID);
+ALTER TABLE department ADD COLUMN quantity CHAR(5);
+ALTER TABLE employee DROP COLUMN Sex;
+ALTER TABLE employee MODIFY name VARCHAR(8);
+SHOW CREATE TABLE employee;
+SHOW CREATE TABLE department;
+ 
+
+5、1）在数据库test中新建表scores,输入以下列：ID （char，8位） 主键, 
+C语言numeric(3,1) ，IT英语 numeric(3,1) ，数据库 numeric(3,1) ，
+软件基础 numeric(3,1) ，平均成绩 。四门学科都不能为空，并且平均成绩为四门学科的平均分；
+   2）为表scores中的四项成绩添加default约束：使其默认值为0；
+   3）为表scores中的四项成绩添加check约束：是每项成绩在0到100之间。
+
+CREATE TABLE scores
+(ID CHAR(8) PRIMARY KEY,
+C NUMERIC(3,1) NOT NULL,
+ITEnglish NUMERIC(3,1) NOT NULL,
+db NUMERIC(3,1) NOT NULL,
+software NUMERIC(3,1) NOT NULL,
+avgscore NUMERIC(3,1) AS((C+ITEnglish+db+software)/4)
+);
+ALTER TABLE scores MODIFY C NUMERIC(3,1) DEFAULT 0;
+ALTER TABLE scores MODIFY ITEnglish NUMERIC(3,1) DEFAULT 0;
+ALTER TABLE scores MODIFY db NUMERIC(3,1) DEFAULT 0;
+ALTER TABLE scores MODIFY software NUMERIC(3,1) DEFAULT 0;
+ALTER TABLE scores ADD CONSTRAINT CHECK(C>=0 AND C<=100);
+ALTER TABLE scores ADD CONSTRAINT CHECK (ITEnglish >=0 AND ITEnglish <=100);
+ALTER TABLE scores ADD CONSTRAINT CHECK(db>=0 AND db<=100);
+ALTER TABLE scores ADD CONSTRAINT CHECK(software>=0 AND software<=100);
+SHOW CREATE TABLE scores;
+  
+
+6、删除department表，并删除数据库test。
+DROP TABLE department;
+DROP TABLE employee;
+DROP TABLE department;
+DROP DATABASE test;
+ 
+
+第二次实验
+一、实验内容
+查询技术的应用
+
+二、	实验目的
+1.	掌握SELECT语句的基本语法
+2.	掌握连接查询的表示
+3.	掌握数据汇总的方法
+4.	掌握SELECT语句的GROUP BY子句的作用和使用方法
+5.	掌握SELECT语句的ORDER BY 子句的作用和使用方法
+
+三、实验题目及解答
+1、创建员工管理数据库（compy）及相应的四张表：
+Employees：员工信息表
+Departments：部门信息表
+Salary：员工薪水信息表
+Purchase：员工购物信息表
+各表中属性的定义可根据表中的记录加以设定，均以编号为主键，例如可定义Departments表结构如下：
+
+列名	数据类型	长度	是否允许空值	说明
+部门编号	Char	3	否	部门编号 主键
+部门名称	Char  	20	否	部门名称
+备注	text	16	是	备注
+向表中填入数据
+
+A、向Departments表中加入表2所示的记录
+编号	部门名称	备注
+1	财务部	null
+2	人力资源部	null
+3	生产部	null
+4	采购部	null
+5	销售部	null
+	
+B、向Employees表中加入表1所示的记录
+编号	姓名	地址	邮编	电话	部门号	出生日期	性别
+000001	张晓强	上海	230027	3333556	2	1956-1-1	1
+010008	柳树	合肥	230027	3131359	1	1966-1-1	1
+002001	许静	北京	230026	3132359	1	1972-1-1	1
+020018	李可	武汉	230026	3693564	1	1950-1-1	0
+102201	张三丰	西安	123456	3635346	5	1962-1-1	0
+102208	白眉	南京	123456	3458965	5	1955-1-1	1
+108991	胡适	昆明	123456	4568921	3	1969-1-1	1
+111006	成吉思汗	海口	123456	3458145	5	1964-1-1	1
+210678	萧然	成都	123456	3454565	3	1967-1-1	1
+
+C、向Salary表中加入表3所示的记录
+编号	收入	支出
+000001	2100	123
+010008	1582	88
+002001	2569	185
+020018	1987	79
+102201	2066	108
+102208	2980	210
+108991	3259	281
+111006	2860	198
+210678	2347	180
+
+D、向Purchase表中加入表4所示的记录
+员工编号	商品	购买数量
+000001	01	3
+000001	03	1
+002001	01	5
+020018	03	6
+108991	11	1
+000001	11	3
+020018	01	5
+201678	02	1
+020018	11	2
+
+CREATE DATABASE compy;
+USE compy;
+
+CREATE TABLE Employees
+(ID CHAR(6) PRIMARY KEY,
+name VARCHAR(12),
+address CHAR(12),
+zip CHAR(6),
+phone CHAR(7),
+depart INT,
+birth DATE,
+sex CHAR(1)
+);
+
+CREATE TABLE Departments
+(ID CHAR(3) PRIMARY KEY,
+name VARCHAR(20) NOT NULL,
+remark TEXT(16)
+);
+
+CREATE TABLE Salary
+(ID CHAR(6) PRIMARY KEY,
+income INT,
+expend INT
+);
+
+CREATE TABLE Purchase
+(ID CHAR(6),
+com CHAR(2),
+num INT
+);
+
+DESC Employees;
+DESC Departments;
+DESC Salary;
+DESC Purchase;
+
+ 
+INSERT INTO Departments(ID,name) VALUES
+('1','财务部'),
+('2','人力资源部'),
+('3','生产部'),
+('4','采购部'),
+('5','销售部');
+SELECT * FROM Departments;
+
+INSERT INTO Employees VALUES
+('000001','张晓强','上海','230027','3333556',2,'1956-01-01','1'),
+('010008','柳树','合肥','230027','3131359',1,'1966-01-01','1'),
+('002001','许静','北京','230026','3132359',1,'1972-01-01','1'),
+('020018','李可','武汉','230026','3693564',1,'1950-01-01','0'),
+('102201','张三丰','西安','123456','3635346',5,'1962-01-01','0'),
+('102208','白眉','南京','123456','3458965',5,'1955-01-01','1'),
+('108991','胡适','昆明','123456','4568921',3,'1969-01-01','1'),
+('111006','成吉思汗','海口','123456','3458145',5,'1964-01-01','1'),
+('210678','萧然','成都','123456','3454565',3,'1967-01-01','1');
+SELECT * FROM Employees;
+
+INSERT INTO Salary VALUES
+('000001',2100,123),
+('010008',1582,88),
+('002001',2569,185),
+('020018',1987,79),
+('102201',2066,108),
+('102208',2980,210),
+('108991',3259,281),
+('111006',2860,198),
+('210678',2347,180);
+SELECT * FROM Salary;
+
+INSERT INTO Purchase VALUES
+('000001','01',3),
+('000001','03',1),
+('002001','01',5),
+('020018','03',6),
+('108991','11',1),
+('000001','11',3),
+('020018','01',5),
+('201678','02',1),
+('020018','11',2);
+SELECT * FROM Purchase;
+
+
+2、简单查询
+  （1）查询1956，1962，1964年出生的员工记录；
+SELECT * FROM Employees WHERE YEAR(birth) IN (1956,1962,1964);
+ 
+  （2）查询性别为1的员工记录；
+SELECT * FROM Employees WHERE sex=1;
+
+  （3）查询名字中包含‘白’字的所有雇员信息；
+SELECT * FROM Employees WHERE name LIKE '%白%';
+ 
+  （4）查询不姓‘李’或者‘胡’，并且名字为三个字的雇员的记录。
+SELECT * FROM Employees WHERE name NOT LIKE '%李%' AND name NOT LIKE '%胡%' AND LENGTH(name)=9;
+ 
+
+3、连接查询的使用
+（1）查询每个雇员的情况以及其薪水情况
+SELECT Employees.*,Salary.income FROM Employees,Salary WHERE Employees.ID=Salary.ID;
+ 
+（2）查询收入高于编号为102201的员工收入的职工信息
+SELECT Employees.*
+FROM Employees,Salary
+WHERE Salary.ID=Employees.ID
+AND Salary.income>(
+SELECT income
+FROM Salary
+WHERE id='102201'
+);
+ 
+
+4．数据汇总
+（1）求财务部员工的平均净收入
+SELECT AVG(income-expend) 
+AS 平均净收入 
+FROM Salary 
+WHERE ID IN (
+SELECT ID 
+FROM Employees 
+WHERE depart=(
+SELECT ID 
+FROM Departments 
+WHERE name='财务部'
+)
+);
+ 
+
+（2）求财务部雇员的总人数
+SELECT COUNT(*)
+AS 财务部人数
+FROM Employees
+WHERE depart=(
+SELECT ID
+FROM Departments
+WHERE name='财务部'
+);
+ 
+
+5．GROUP  BY ，ORDER  BY 子句的使用
+（1）求各部门的雇员数
+SELECT COUNT(*) AS 部门人数 FROM Employees GROUP BY depart;
+ 
+
+（2）将各雇员的情况按薪水由低到高排列
+SELECT Employees.*,income
+FROM Employees,Salary
+WHERE Employees.ID=Salary.ID
+ORDER BY Salary.income;
+ 
+
+6、（选做题）查找比所有财务部的员工的收入都高的员工的姓名；
+SELECT name
+FROM Employees,Salary
+WHERE Employees.ID=Salary.ID
+AND Salary.income > ALL(
+SELECT income
+FROM Salary
+WHERE ID IN (
+SELECT ID
+FROM Employees
+WHERE depart=(
+SELECT ID
+FROM Departments
+WHERE name='财务部'
+)
+)
+);
+ 
+ 
+第三次实验
+一、实验内容
+数据库的表中数据的操作。
+
+二、实验目的
+1. 学习SQL语句进行表中的数据的插入、更新和删除；
+2. 学会含有子查询语句的数据更新操作；
+3. 理解表中列的属性对表中数据的影响。
+
+三、实验准备
+试用上次实验创建的员工管理数据库（compy）及相应的四张表（具体见实验2）：
+Employees：员工信息表
+Departments：部门信息表
+Salary：员工薪水信息表
+Purchase：员工购物信息表
+
+四、实验题目及解答
+1. 向Employees表中加入一列：年龄，其值为“当前时间”与“出生日期”差值（提示：年龄的计算可以使用getdate及year两个日期函数，具体使用参考）。
+ALTER TABLE Employees ADD COLUMN age INT AS(2017-YEAR(birth));
+SELECT * FROM Employees;
+ 
+2. 数据更新：
+1）将编号为102201的雇员地址改为“苏州”；
+UPDATE Employees SET address='苏州' WHERE ID='102201';
+SELECT * FROM Employees;
+ 
+2）将编号为102208的雇员收入降低10％；
+UPDATE Salary SET income=income*0.9 WHERE ID='102208';
+SELECT * FROM Salary;
+ 
+3）更改salary表，如果收入和支出的差值小于2000，则将收入提高1000；
+UPDATE Salary SET income=income+1000 WHERE (income-expend)<2000;
+SELECT * FROM Salary;
+
+3. 使用SELECT…INTO进行多行插入：
+   将每个部门的编号，名称，雇员数，插入到新表DepartmentStatic中。
+CREATE TABLE DepartmentStatic
+SELECT departments.name,depart,COUNT(*) AS 人数 
+FROM employees,departments
+WHERE departments.ID=depart
+GROUP BY depart;
+SELECT * FROM DepartmentStatic;
+ 
+4. 含子查询的数据更新
+	（1）将地址为合肥的雇员收入增加5％
+UPDATE Salary
+SET income=income*1.05
+WHERE ID=(
+SELECT ID
+FROM Employees
+WHERE address='合肥'
+);
+SELECT * FROM Salary;
+ 
+（2）	将收入小于平均收入的雇员的收入增加500元
+CREATE TABLE temp SELECT AVG(income) FROM Salary;
+UPDATE Salary
+SET income=income+500
+WHERE income<(
+SELECT *
+  	FROM temp
+);
+DROP TABLE temp;
+SELECT * FROM Salary;
+ 
+
+（3）	将财务部的雇员收入减少100
+UPDATE Salary
+SET income=income-100
+WHERE ID IN (
+SELECT ID
+  	FROM Employees
+  	WHERE depart=(
+    	SELECT ID
+    	FROM Departments
+    	WHERE name='财务部'
+  	)
+);
+SELECT * FROM Salary;
+ 
+5.	删除
+	删除DepartmentStatic中所有数据
+DELETE FROM DepartmentStatic;
+SELECT * FROM DepartmentStatic;
+ 
+6. （选做）
+（1）将总收入大于6000的部门中的雇员收入减少5％
+CREATE TABLE temp
+SELECT depart
+FROM Employees,Salary
+WHERE Employees.ID=Salary.ID
+GROUP BY depart
+HAVING SUM(income)>6000;
+SELECT * FROM temp;
+
+UPDATE Salary
+SET income=income*0.95
+WHERE ID IN (
+SELECT ID
+FROM Employees
+WHERE depart IN (
+SELECT * FROM temp
+)
+);
+DROP TABLE temp;
+SELECT * FROM Salary;
+ 
+（2）删除收入大于平均收入的雇员的信息，包括Employees, Salary中相关的
+CREATE TABLE temp SELECT AVG(income) FROM Salary;
+DELETE FROM Employees
+WHERE ID IN (
+SELECT ID
+FROM Salary
+WHERE income > (
+SELECT * FROM temp
+)
+);
+DELETE FROM Salary
+WHERE income > (
+SELECT * FROM temp
+);
+DROP TABLE temp;
+
+SELECT * FROM Employees;
+SELECT * FROM Salary;
+ 
+第四次实验
+一、实验内容
+视图练习
+
+二、实验目的
+1. 练习视图的建立与使用；
+2. 理解视图的优点和作用。
+
+三、实验准备
+创建员工管理数据库（company）及相应的四张表：
+Employees：员工信息表
+Departments：部门信息表
+Salary：员工薪水信息表
+purchase表：购买信息表
+
+四、实验题目及步骤
+
+1、建立视图
+（1）建立视图view1， 查询所有财务部的职工的编号、姓名和工资收入，显示前5项， 并按照收入排序。
+CREATE VIEW view1 AS
+SELECT Employees.ID,name,income
+FROM Employees,Salary
+WHERE Employees.ID=Salary.ID
+AND depart=(
+SELECT ID
+      	FROM Departments
+      	WHERE name='财务部'
+    		)
+ORDER BY income
+LIMIT 5;
+SELECT * FROM view1;
+ 
+
+（2）建立视图view2，查询所有职工的职工编号、姓名和盈余；
+CREATE VIEW view2 AS
+SELECT Employees.ID,name,income-expend AS 盈余
+FROM Employees,Salary
+WHERE Employees.ID=Salary.ID;
+SELECT * FROM view2;
+ 
+
+（3）在建立视图view1上建立视图view3，要求为：所有财务部的，收入大于2000的职工编号、姓名和工资收入；
+CREATE VIEW view3 AS
+SELECT * FROM view1 WHERE income>2000;
+SELECT * FROM view3;
+ 
+
+（4）建立市场部购买商品1的员工的信息的视图view4，并在视图view4上查询收入大于3000的员工信息；
+CREATE VIEW view4 AS
+SELECT Employees.*,income
+FROM Employees,Salary
+WHERE Employees.ID=Salary.ID
+AND Employees.ID IN (
+SELECT ID FROM purchase WHERE com='01');
+SELECT * FROM view4;
+ 
+
+（5）建立关于年龄小于40的所有员工的编号、姓名、电话、地址、年龄的视图view5；
+CREATE VIEW view5 AS
+SELECT ID,name,phone,address,age
+FROM Employees
+WHERE age<40;
+SELECT * FROM view5;
+
+ 
+（6）建立关于视图性别为‘1’的员工的编号、姓名、地址、电话、部门号、出生日期、性别的视图view6。
+CREATE VIEW view6 AS
+SELECT ID,name,address,phone,depart,birth,sex
+FROM Employees
+WHERE sex=1;
+SELECT * FROM view6;
+ 
+
+2、查询视图
+
+（1）在视图view1上查询收入大于3000的财务部员工的信息；
+SELECT * FROM view1 WHERE income>3000;
+ 
+（2）通过视图view2和表查询盈余最大的职工所在部门的部门号。
+SELECT depart 
+FROM Employees 
+WHERE ID=(
+SELECT ID 
+FROM view2 
+WHERE 盈余=(
+SELECT MAX(盈余) 
+FROM view2
+)
+);
+ 
+
+3、更新视图
+（1）将视图view5中员工编号为‘ 002001’的电话改为‘8263137’；
+UPDATE view5
+SET phone='8263137'
+WHERE phone='002001';
+（2）在视图view6上添加一个新的员工记录：
+010076 ，祝无双，青岛，3865730，2,1985-11-11，1
+INSERT INTO view6
+VALUE('010076','祝无双','青岛','3865730',2,'1985-11-11','1');
+SELECT * FROM view6;

@@ -1,0 +1,1046 @@
+Semi-Coupled Dictionary Learning with Applications to Image Super-Resolution
+
+and Photo-Sketch Synthesis
+
+Shenlong Wang1,2 Lei Zhang2,∗ Yan Liang1 Quan Pan1
+
+1Northwestern Polytechnical University, 2The Hong Kong Polytechnic University
+
+shenlong.wang@gmail.com, cslzhang@comp.polyu.edu.hk, liangyan@nwpu.edu.cn, quanpan@nwpu.edu.cn
+
+Abstract
+
+In various computer vision applications, often we need
+to convert an image in one style into another style for bet-
+ter visualization, interpretation and recognition; for exam-
+ples, up-convert a low resolution image to a high resolution
+one, and convert a face sketch into a photo for matching,
+etc. A semi-coupled dictionary learning (SCDL) model is
+proposed in this paper to solve such cross-style image syn-
+thesis problems. Under SCDL, a pair of dictionaries and a
+mapping function will be simultaneously learned. The dic-
+tionary pair can well characterize the structural domain-
+s of the two styles of images, while the mapping function
+can reveal the intrinsic relationship between the two styles’
+domains.
+In SCDL, the two dictionaries will not be ful-
+ly coupled, and hence much ﬂexibility can be given to the
+mapping function for an accurate conversion across styles.
+Moreover, clustering and image nonlocal redundancy are
+introduced to enhance the robustness of SCDL. The pro-
+posed SCDL model is applied to image super-resolution and
+photo-sketch synthesis, and the experimental results vali-
+dated its generality and effectiveness in cross-style image
+synthesis.
+
+1. Introduction
+
+In many computer vision and pattern recognition appli-
+cations, people often have images of the same scene but
+obtained from different sources, and consequently the con-
+version between the images of different styles are required.
+For example, in law enforcement we may need to compare
+mug-shot photos to a sketch drawn by an artist based on the
+verbal description of the suspect. In addition, a low resolu-
+tion image/video captured by low-end devices often needs
+to be up-converted to a higher resolution for better visual-
+ization and interpretation. Researches on such cross-style
+image synthesis problems can not only beneﬁt the practical
+applications (e.g., public security) but also help people un-
+
+∗Corresponding author. Email: cslzhang@comp.polyu.edu.hk
+
+In the past decades,
+
+derstand how the human visual system perceives the distinc-
+tive information of the same scene across different sources.
+image cross-style synthesis and
+recognition have been attracting much attention. Since the
+images under different styles, even describing the same
+scene, can be very different, how to reveal the underlying
+relations between the two styles is the key issue to be stud-
+ied. In order to predict the unknown images in one style
+from their counterparts in another style, statistical learning
+approaches can be adopted to learn the underlying mapping
+from example image pairs. Many image processing and
+computer vision tasks can be considered as a cross-style
+image synthesis problem, such as image super-resolution
+[12, 15, 29, 21], artistic rendering [11, 8, 16], photo-sketch
+synthesis [24, 26] and multi-modal biometrics [13, 22, 26],
+etc. Various methods have been proposed to solve one of
+the above mentioned tasks by using patch-based matching
+[11, 26], coupled subspace learning [13, 16] and coupled
+dictionary learning [27] techniques, etc. However, most of
+these methods are limited in ﬁnding the complex mapping
+function between styles, as well as limited in reconstructing
+the style-speciﬁc local structures in the conversion process.
+In this paper, we propose a simple yet more general mod-
+el to solve the cross-style image synthesis problems. Specif-
+ically, we learn a dictionary pair and a mapping function si-
+multaneously. The pair of dictionaries aims to characterize
+the two structural domains of the two styles, and the map-
+ping function is to reveal the intrinsic relationship between
+the two styles for synthesis. In the learning process, the two
+dictionaries will not be fully coupled, allowing the map-
+ping function much ﬂexibility for accurate synthesis across
+styles. We call the proposed model semi-coupled dictionary
+learning (SCDL), and apply it to image super-resolution and
+photo-sketch synthesis to validate its performance.
+
+In real-world data, the mappings between different styles
+can be complex, spatial-variant and nonlinear. It is not suf-
+ﬁcient to use a single mapping to describe the complex re-
+lationship between different image styles. In order to im-
+prove the robustness and stability of SCDL, we propose a
+new model selection (clustering) method and integrate it in-
+
+to SCDL. The model selection can effectively separate data
+into different clusters so that in each cluster a stable linear
+mapping between the two styles can be learned. Different
+from the previous methods which do clustering in the signal
+domain, the proposed model selection performs clustering
+in the style-speciﬁc sparse domains, aiming at enhancing
+the style conversion capability.
+
+The rest of the paper is organized as follows. Section 2
+reviews related works. Section 3 presents the SCDL frame-
+work. Section 4 presents the algorithm. Section 5 conducts
+experiments and Section 6 concludes the paper.
+
+2. Related Works
+
+Various cross-style image synthesis problems, such as
+image analogies [11], texture synthesis [8, 16], and mul-
+timodal face recognition [26, 13, 22], have been proposed
+and studied. In this paper, we focus on the problems of im-
+age super-resolution and photo-sketch synthesis, and thus
+we mainly review the methods on these two applications.
+
+Image super-resolution aims to reconstruct a high reso-
+lution (HR) image from its low resolution (LR) counterpart.
+There are mainly two categories of super-resolution meth-
+ods. In the ﬁrst category, the LR image is down-sampled
+from a blurred version of the HR image [10]. The blur-
+ring kernel is known (or can be estimated) and used in the
+HR image reconstruction process. This is basically an in-
+verse problem with an imaging model available.
+In the
+second category, often the LR image is modeled as the di-
+rectly down-sampled version of the HR image. We consid-
+er the second case in this paper, and the super-resolution
+problem can be viewed as an image interpolation problem
+[12, 29, 15, 21]. Many image interpolation methods, in-
+cluding the classical bi-cubic interpolator [12] and the edge
+guided interpolators [15, 29], interpolate the missing HR
+pixel as the weighted average of its local neighbors. The
+difference between these methods lies in how the weights
+are determined. In [29] the autoregressive model is used to
+exploit the image local correlation for effective image inter-
+polation. In [21], a series of linear inverse estimators of HR
+image are computed based on different priors on the image
+regularity. These estimators are then mixed in a frame over
+patches of coefﬁcients, providing a sparse signal represen-
+tation under l1-norm minimization weighted by the signal
+regularity in each patch.
+
+In law enforcement, we may have to compare mug-shot
+photos to a sketch drawn by an artist based on the verbal
+description of the suspect. In addition, since near infrared
+(NIR) imaging is robust to illumination changes, it is often
+used in outdoor face image acquisition, and matching face
+images under NIR and visible lights is necessary. Tang and
+Wang [24] used eigentransform to learn mappings between
+different image styles. Their method is based on two impor-
+tant assumptions:
+transformation between different styles
+
+can be approximated as a linear process, and faces can be
+reconstructed from training samples by PCA. This method
+works well in face hallucination [25]. However, due to the
+limitations of PCA, the two assumptions can hardly hold
+for image styles between which the mappings are highly
+nonlinear. Another family of cross-style image modeling
+methods is to construct a hidden subspace [22, 13]. This
+subspace aims to maximize correlations of different image
+styles so that images of different styles projected into the
+subspace are highly correlated. One representative work is
+canonical correlated analysis, which has been well used in
+multi-modal face recognition tasks [14]. However, canoni-
+cal correlated analysis aims at preserving correlation or dis-
+criminative information instead of reconstructive informa-
+tion, and it may not lead to highly accurate image recon-
+struction across styles. To overcome these drawbacks, Lin
+and Tang [16] proposed a novel coupled subspace learning
+strategy to learn image mappings between different styles.
+They ﬁrst utilized correlative component analysis to ﬁnd the
+hidden spaces for each style to preserve correlative informa-
+tion, and then learned a bidirectional transform between two
+subspaces.
+
+Natural image patches could be sparsely represented by
+an over-complete dictionary of atoms. Recently, sparse
+coding (or sparse representation) and dictionary learning
+have proven to be very effective in image reconstruction
+[20, 9, 6, 5], while the dictionary plays an important role
+to successfully accomplish such tasks. Learning a dictio-
+nary from example image patches has been attracting much
+interest, and some representative methods have been pro-
+posed, such as K-SVD [1], supervised dictionary learning
+[19], online dictionary learning [17], etc.
+In [27], Yang
+et al. used a coupled dictionary learning model for image
+super-resolution. They assumed that there exist coupled
+dictionaries of HR and LR images, which have the same
+sparse representation for each pair of HR and LR patch-
+es. After learning the coupled dictionary pair, the HR patch
+is reconstructed on HR dictionary with sparse coefﬁcients
+coded by LR image patch over the LR dictionary. In our
+proposed SCDL, this strong regularization of “same sparse
+representation” is relaxed for cross-style image synthesis,
+and a more stable cross-style mapping can be learned in the
+sparse domain.
+
+3. Semi-coupled dictionary learning
+3.1. Problem formulation
+
+The image cross-style synthesis problem can be formu-
+lated as follows: given an image x of style sx, how to re-
+cover the associated image y of style sy of the same scene?
+The difﬁculties of this kind of problems vary with image
+styles. Suppose that all the images in style sx form a space
+X and images in style sy form a space Y, and there exists
+
+Figure 1. Flowchart of the proposed semi-coupled dictionary learning (SCDL) based image cross-style synthesis.
+
+a mapping f (·) from X to Y: y = f (x). If the mapping is
+invertible and known, we can simply transform between x
+and y. Unfortunately, in most cases this kind of transform
+is invertible and hard to learn directly.
+
+Since each pair of images indicate the same scene, it
+is reasonable to assume that there exists a hidden space
+where the styles can be converted to each other. There-
+fore, some coupled subspace/dictionary learning methods
+[16, 27] have been proposed, and they assume that in the
+coupled subspace the representation coefﬁcients of the im-
+age pair should be strictly equal. However, this assumption
+is too strong to address the ﬂexibility of image structures
+in different styles. In this paper, we relax this assumption
+and assume that there exists a dictionary pair over which
+the representations of two styles have a stable mapping. S-
+ince the pair of dictionaries is not required to be fully cou-
+pled, we call the proposed method semi-coupled dictionary
+learning (SCDL). In SCDL, we employ dictionaries to seek
+for the structural hidden spaces and the mapping. Once the
+dictionary pair and mapping are learned, cross-style image
+synthesis can be performed, and the synthesis procedures
+are illustrated in Fig. 1.
+
+Denote by X and Y the training datasets formed by the
+image patch pairs of styles sx and sy. We propose to min-
+imize the energy function below to ﬁnd the desired semi-
+coupled dictionaries as well as the desired mapping:
+
+min{Dx,Dy,f (·)} Edata(Dx, X) + Edata(Dy, Y)
+
++γEmap(f (Λx), Λy) + λEreg(Λx, Λy, f (·), Dx, Dy)
+(1)
+where Edata(·,·) is the data ﬁdelity term to represent data
+description error, Emap(·,·) is the mapping ﬁdelity term to
+represent the mapping error between the coding coefﬁcients
+of two styles, and Ereg is the regularization term to regular-
+ize the coding coefﬁcients and mapping. Note that in the
+proposed model, the coding coefﬁcients of X and Y over
+Dx and Dy will be related by a mapping f (·). The two dic-
+tionaries (Dx and Dy) and the mapping function f (·) will
+be jointly optimized.
+One special but important case is that the mapping f (·)
+is linear, and then the framework in Eq. 1 can be turned
+into the following dictionary learning and ridge regression
+
+problem:
+min{Dx,Dy,W}(cid:107)X − DxΛx(cid:107)2
++γ(cid:107)Λy − WΛx(cid:107)2
+
+F + (cid:107)Y − DyΛy(cid:107)2
+
+F
+
+F + λx(cid:107)Λx(cid:107)1 + λy(cid:107)Λy(cid:107)1 + λW(cid:107)W(cid:107)2
+s.t. (cid:107)dx,i(cid:107)l2 ≤ 1,(cid:107)dy,i(cid:107)l2 ≤ 1,∀i
+
+F
+
+(2)
+
+where γ, λx, λy, λW are regularization parameters to bal-
+ance the terms in the objective function and dx,i, dy,i are
+the atoms of Dx and Dy, respectively. The objective func-
+tion in Eq. 2 is not jointly convex to Dx, Dy, W. How-
+ever, it is convex w.r.t. each of them if others are ﬁxed.
+Therefore, we can design an iterative algorithm to alterna-
+tively optimize the variables. In [27], the mapping trans-
+form W is predeﬁned as an identity matrix and the coding
+coefﬁcients Λx and Λy are assumed the same. This mod-
+el actually approximates f (·) as a conformal mapping on
+the coupled dictionaries. However, for complex data with
+invertible mapping, this model is limited to reconstruct the
+image structures across different styles. In comparison, our
+proposed SCDL model relaxes the coupling of dictionaries
+by allowing mapping errors between coding coefﬁcients.
+3.2. Training
+
+To tackle the energy-minimization in Eq. 2, we separate
+the objective function into 3 sub-problems, namely sparse
+coding for training samples, dictionary updating and map-
+ping updating. First, we need to initialize the mapping W
+and dictionary pair. W can be simply initialized as the i-
+dentity matrix. There are many ways to initialize Dx and
+Dy such as random matrix, PCA basis, DCT basis, etc. Us-
+ing l1-minimization, the sparse codes Λx and Λy can then
+be obtained. Note that mapping by W is assumed to be lin-
+ear, and the bidirectional transform learning strategy can be
+adopted to learn transforms from Λx to Λy and from Λy to
+Λx simultaneously.
+
+With some initialization of W and dictionary pair Dx and
+Dy, we can calculate the sparse coding coefﬁcients Λx and
+Λy as follows:
+min{Λx} (cid:107)X − DxΛx(cid:107)2
+min{Λy} (cid:107)Y − DyΛy(cid:107)2
+
+F + γ(cid:107)Λy − WxΛx(cid:107)2
+F + γ(cid:107)Λx − WyΛy(cid:107)2
+
+F + λx(cid:107)Λx(cid:107)1
+F + λy(cid:107)Λy(cid:107)1
+(3)
+
+4. Enhanced algorithm
+4.1. Clustering and model selection
+
+Due to the complex structures in images of different
+styles, learning only one pair of dictionaries and an asso-
+ciated linear mapping function is often not enough to cover
+all variations of image cross-style synthesis. For example,
+in face sketch-photo synthesis the mapping may vary sig-
+niﬁcantly in different facial regions. Therefore multi-model
+should be learned to enhance the robustness.
+Intuitively,
+pre-clustering could be conducted to separate training data
+into several groups so that the linear mapping in each group
+can be more stably learned. Lin and Tang [16] proposed
+a Coupled Gaussian Mixture Model to tackle this coupled
+data clustering problem. They dealt with sample pairs as a
+whole in the joint spaces and modeled them as mixtures of
+several cluster centers. The objective function of the clus-
+tering algorithm is [16]:
+
+max{M,c}
+
+P (ui, vi|Mc(i))
+
+(9)
+
+(cid:89)n
+
+i=1
+
+(6)
+
+where
+
+Eq. 3 is a multi-task lasso problem. Many l1-optimization
+algorithms can solve it effectively, such as FISTA [2],
+LARS [7], etc. In this paper, we choose LARS [7] as the
+l1-optimization method for its efﬁciency and stability.
+
+With Λx and Λy ﬁxed, dictionary pair Dx and Dy can
+
+be updated as follows:
+
+min{Dx,Dy} (cid:107)X − DxΛx(cid:107)2
+
+F + (cid:107)Y − DyΛy(cid:107)2
+s.t. ∀i,(cid:107)dx,i(cid:107)l2 ≤ 1,(cid:107)dy,i(cid:107)l2 ≤ 1
+
+F
+
+(4)
+
+Eq. 4 is a quadratically constrained quadratic program prob-
+lem (QCQP) and we adopt a one-by-one update strategy
+[28] to solve it.
+
+With dictionary and coding coefﬁcients ﬁxed, we can
+
+then update the mapping W:
+
+min{W} (cid:107)Λy − WΛx(cid:107)2
+
+F + (λW /γ) · (cid:107)W(cid:107)2
+
+F
+
+(5)
+
+Eq. 5 is a ridge regression problem and the solution can be
+analytically derived as:
+
+W = ΛyΛT
+
+x (ΛxΛT
+where I is an identity matrix.
+
+x + (λW /γ) · I)−1
+
+With SCDL, we can learn the dictionary pair Dx and Dy
+on which the sparse coding coefﬁcients of two styles have
+stable bidirectional linear transformations. In Section 4 we
+can further enhance its stability by clustering samples into
+several clusters and exploiting the image nonlocal redun-
+dancy of patches.
+3.3. Synthesis
+
+After learning the dictionaries Dx and Dy and the lin-
+ear mapping W, for a given image x in style sx, we can
+easily convert it into an image y of style sy by solving the
+following optimization:
+min{αx,i,αy,i} (cid:107)xi − Dxαx,i(cid:107)2
+
+F + (cid:107)yi − Dyαy,i(cid:107)2
+F + λx(cid:107)αx,i(cid:107)1 + λy(cid:107)αy,i(cid:107)1
+
++γ(cid:107)αy,i − Wαx,i(cid:107)2
+
+(7)
+
+F
+
+where xi is a patch of x and yi is the corresponding patch in
+the intermediate estimate of y to be synthesized. Eq. 7 can
+be solved by alternatively updating αx,i and αy,i. Finally,
+each patch of y can be reconstructed as:
+
+ˆyi = Dy ˆαy,i
+
+(8)
+
+c(i) = arg max{k} P (ui, vi|Mk)
+
+(10)
+and Mk indicates a coupled Gaussian model u ∼
+N (mu,k, Σu,k) and v ∼ N (mv,k, Σv,k).
+
+The clustering in [16] is actually performed according
+to the concentration of data points. The objective function
+simply assumes that joint data assembling closely in vec-
+tor space share the same linear mapping between the two
+styles. In this paper, we propose to conduct clustering in
+the sparse domains spanned by the two dictionaries. In this
+way, a linear mapping between the sparse codes of two im-
+age styles can be more stably and accurately learned than
+in the non-sparse original signal spaces. For easy calcula-
+tion and modeling, we suppose that the model prediction
+error is Gaussian distributed. Based on the above discus-
+sions, we integrate a novel model selection procedure into
+the proposed SCDL framework by optimizing the following
+objective function:
+
+max{W,c}
+
+= min{W,c}
+
+P (αx,i, αy,i|Wc(i))
+(cid:107)αx,i − Wc(i)αy,i(cid:107)2
+
+(11)
+
+(cid:89)n
+(cid:88)n
+
+i=1
+
+i=1
+
+After all the patches are estimated, the estimation of the
+desired image y can then be obtained.
+
+In our synthesis method, an initial estimation of y is
+needed. Depending on the problem, different strategies can
+be adopted to initialize y. For example, in the problem of
+image super-resolution, y can be simply initialized by bi-
+cubic interpolation. In the problem of photo-sketch synthe-
+sis, we can ﬁrst code xi on Dx for coding vector αx,i, and
+then initialize yi as DyWαx,i.
+
+where c are model indices for samples and W are style
+mappings in each cluster.
+
+Our method focuses on concentration around super-
+planes in the sparse coding domains instead of centroids in
+the non-sparse original signal domains. Eq. 11 can be alter-
+natively optimized by ﬁxing one of the two sets of variables,
+c or W. Therefore, a heuristic strategy which is similar to
+K-Means clustering can be integrated in our SCDL frame-
+work. In each iteration we update the clustering index of
+
+iyl
+
+i, where yl
+
+patch as: ˆyi =(cid:80)L
+arg min{yi} ESCDL + δ(cid:107)yi −(cid:88)L
+
+i is the lth most similar
+i=1 bl
+patch to yi and bl
+i is the nonlocal weight as deﬁned in [3].
+Consequently, the nonlocal based cross-style image synthe-
+sis can be performed by:
+
+i(cid:107)2
+iyl
+bl
+
+2
+
+(14)
+
+l=1
+
+where ESCDL is the energy function deﬁned in Eq. 7 and δ
+is the balancing parameter.
+4.3. Summary of algorithms
+
+The proposed SCDL approach involves two algorithms:
+the dictionary and mapping learning algorithm and the im-
+age synthesis algorithm, which are summarized in the fol-
+lowing Algorithm 1 and Algorithm 2, respectively.
+
+Algorithm 1 Semi-Coupled Dictionary Learning
+
+Input: Training datasets X and Y of two image styles.
+Each corresponding pair indicates the same object. Initial
+dictionary pair Dx and Dy, and initial mapping Wx and
+Wy.
+For each iteration Until convergence:
+For each cluster
+
+1. Fix other variables, update Λx and Λy by sparse
+
+coding in Eq. 3.
+
+2. Fix other variables, update Dx and Dy in Eq. 4.
+
+3. Fix other variables, update Wx and Wy in Eq. 5.
+
+Update clustering index of each pair by Eq. 13.
+Output: Dx, Dy, Wx and Wy
+
+Algorithm 2 Cross-style Image Synthesis
+
+Input: Test image x, well trained dictionary pair Dx and
+Dy, the learnt mapping Wx and Wy for two styles.
+Initialization: Initialize y as discussions in 3.3. Initialize
+clustering index of each patch according to Eq. 13.
+For each iteration Until convergence:
+
+1. Update y by the nonlocal based cross-style synthe-
+
+sis in Eq. 14.
+
+2. Update clustering index of each patch according to
+
+Eq. 13.
+
+Output: Synthesized image y.
+
+5. Experiment results
+
+The proposed SCDL model is simple yet general.
+
+It
+can be adapted to solve various cross-style image synthe-
+
+Figure 2. Examples of cluster distributions in photo-sketch synthe-
+sis. Each sub-ﬁgure shows the distribution of a cluster, while the
+stronger color represents higher frequency.
+
+each training sample based on model ﬁtting error, and up-
+date linear mappings according to the current clusters.
+
+After integrating clustering into the learning of SCDL,
+multiple dictionary pairs and mappings are learned. In the
+synthesis stage, a model must be selected for a local image
+patch. However, we only have the image in style sx, and
+coupled clustering for model seeking cannot be conducted
+directly. To solve this problem, we can initialize y, and then
+determine the initial cluster index c(i) of each patch by:
+
+min{c} (cid:107)αx,i − Wc(i) ˆαy,i(cid:107)2
+
+(12)
+
+where αx,i and ˆαy,i are the sparse coding coefﬁcients of
+source style image patch xi and initial guess of target style
+image patch yi. In image super-resolution this model selec-
+tion is effective because y can be well initialized by bicubic
+interpolator. However when dealing with cross-style face
+synthesis, it is difﬁcult to get a good enough initialization
+of y. Based on the structure of face images, we found that
+patches in different clusters have distinctive spatial distribu-
+tion, as shown in Fig. 2. We see that the patches in differ-
+ent clusters concentrate at different spatial locations. The
+strong color means high frequency.
+
+With this observation, we can have an empirical estima-
+tion of the spatial distribution of each cluster in the face im-
+ages. Initial model selection can then be transformed into a
+MAP problem:
+
+max{c} P (αx,i, ˆαy,i|Wc)P (Li|c)
+
+(13)
+where Li = (rowi, coli)T are coordinates of patches xi in
+spatial domain and distribution P (Li|c) is the prior proba-
+bility from empirical observation on training data.The MAP
+problem in Eq. 13 is a weighted distance minimum problem
+that can be easily solved.
+4.2. Exploiting nonlocal self-similarities
+
+Recently many works have shown that the nonlocal re-
+dundancies existing in natural images are very useful for
+image restoration and a good combination of local sparsity
+and nonlocal redundancy can greatly enhance the perfor-
+mance of image reconstruction [3, 4, 18, 23]. Our synthe-
+sis framework can also be enhanced by integrating nonlocal
+similarities. For each local patch yi, we can search for it-
+s similar patches in the whole image, and then predict this
+
+In this paper, we apply it to image super-
+sis problems.
+resolution and photo-sketch synthesis to verify its effective-
+ness.
+
+It is crucial to select appropriate parameters for differ-
+ent applications. In this paper, a combined line-search s-
+trategy was used to select parameters for each application
+according to the minimal energy after converge. The pa-
+rameters selected in this way include those regularization
+parameters λx, λx, λx, γ, δ. For the number of clusters in
+pre-clustering, image patch size and the number of atom-
+s in the dictionary, we empirically set them by experience.
+The speciﬁc values of these parameters will be given in the
+following experiments.
+
+Due to the page limit, only partial experimental results
+are shown. More results and the MATLAB source codes of
+this paper can be found at http://www.comp.polyu.edu.hk/
+∼cslzhang/SCDL.htm.
+5.1. Image Super-resolution
+
+As we discussed in Section 2, we consider the image
+super-resolution problem where the low-resolution (LR)
+image is directly down-sampled from the high-resolution
+(HR) image. Since there is no blurring (or we can say that
+the blur kernel is the Dirac delta function) before down-
+sampling, the missing pixels have no direct connection with
+the sampled pixels, making the super-resolution a highly
+ill-posed problem. Fortunately, natural images have a rich
+amount of local and nonlocal redundancy, and we can as-
+sume that there exists a piecewise linear mapping between
+the HR and LR image patches in the domains spanned by an
+HR dictionary Dh and an LR dictionary Dl. With a train-
+ing set Y of HR patches and the associated training set X
+of LR patches, the model in Eq. 2 can be adapted to learn
+the mapping W.
+In our experiments, 500 thousand training patch pairs are
+extracted from the Kodak PhotoCD dataset∗, which has no
+relation with the testing images used in the experiments.
+The patch size is 5 × 5. Pre-clustering is conducted and
+cluster number is set to be 64. We choose nine widely
+used testing images in the experiments. The regulariza-
+tion parameter λx, λx, λx, γ, δ, are set to be 0.01, 0.01, 0.1,
+0.1 and 0.25, respectively. The number of atoms in the
+learned dictionary is set as 256 for each cluster.
+In the
+reconstruction (i.e., synthesis) stage, bicubic interpolation
+is used for the initialization of HR image. The represen-
+tative and state-of-the-art image super-resolution methods,
+including bicubic [12], SAI [29], SME [21] and ScSR [27],
+are employed to compare with the proposed SCDL method.
+All the codes are downloaded from the authors’ websites.
+Note that in the implementation of ScSR, the Matlab func-
+tion “imresize” is used to generate the LR image, which
+actually involves a smooth ﬁltering before down-sampling.
+
+∗http://r0k.us/graphics/kodak/
+
+We ﬁrst do image super-resolution with scaling factor 2.
+The PSNR results are listed in Table 1, while an example
+(Butterﬂy) is shown in Fig. 3. For color images, we only
+calculate PSNR measures for the luminance channel. From
+Table 1 we can see that our proposed method outperforms
+state-of-the-arts in most cases, and its PSNR is in average
+0.26dB higher than SAI, which is the second best among all
+competing methods. In particular, from Fig. 3 we can see
+that although the SAI method can preserve well the image
+edges, it will also over-smooth the edges to some extent.
+For example, some ﬁne structures in the wing of the But-
+terﬂy are smoothed out by SAI, but interestingly such ﬁne
+structures can be partially preserved by the proposed SCDL
+method.
+
+We then do image super-resolution with scaling factor
+3. Since the codes of SAI and SME can only do super-
+resolution with scaling factor 2n, where n is an integer, we
+only compare SCDL with bicubic and ScSR in this exper-
+iment. The PSNR results are listed in Table 2, and an ex-
+ample (Leaves) is shown in Fig. 4. Again, SCDL performs
+much better than ScSR in terms of both PSNR and visual
+perception quality.
+
+5.2. Face synthesis between sketch and photo
+
+The proposed SCDL can also be used for other appli-
+cations such as sketch-photo/photo-sketch synthesis, which
+have potential applications in law enforcement and enter-
+tainment. Sketches which are often drawn by artists have
+signiﬁcantly different appearance from the original photos.
+Here we conduct photo-sketch and sketch-photo face syn-
+thesis on the CUFS Database [26], which consists of three
+parts: 188 subjects from CUHK students, 295 subjects from
+XM2TVS database and 123 subjects from the AR database.
+Each subject has one photo image and one corresponding
+sketch image drawn by artists. In our experiments we use
+the 88 subjects from CUHK students for training and others
+as testing samples.
+
+As mappings between photo and sketch are highly non-
+linear, we do synthesis on image patches. As artists prefer to
+exaggerate some local structures of human faces, for similar
+patches in photo their corresponding patches in sketch can
+be very different. Therefore, we need to pre-cluster patch
+pairs to learn multiple dictionary pairs and linear mappings
+to address the complex relationship between photo and s-
+ketch.
+In the synthesis, the initialization of sketch-photo
+is made as explained in Section 3.3, and each patch pair is
+clustered by Eq. 13. 50,000 pairs of patches are randomly
+selected for training. The patch size is 10× 10 and the clus-
+ter number is 64. The number of atoms in the dictionary is
+256. The regularization parameters, λx, λx, λx, γ, δ, are set
+to be 0.015, 0.015, 0.15, 0.1 and 0.4, respectively.
+
+Fig.5 shows the synthesis results for photo-sketch and
+sketch-photo synthesis, respectively. Wang and Tang’s
+
+Figure 3. Experimental results on image super-resolution (scaling factor: 2). From left to right: low resolution image, high resolution
+ground-truth, and reconstructed images by Bicubic [12], ScSR [27], SAI [29], SME [21] and the proposed SCDL method.
+
+Image
+
+Bicubic[12]
+
+SAI[29]
+SME[21]
+ScSR[27]
+Proposed
+
+Girl
+33.83
+34.13
+34.03
+33.29
+34.25
+
+Table 1. PSNR (dB) results on image super-resolution (scaling factor = 2)
+
+Butterﬂy Fence
+24.52
+27.68
+23.78
+29.17
+28.65
+24.53
+24.05
+28.27
+29.62
+24.76
+
+Starﬁsh Parthenon House Foreman Cameraman
+30.22
+30.73
+30.35
+30.35
+30.94
+
+27.08
+27.10
+27.13
+26.46
+27.32
+
+32.15
+32.84
+33.15
+31.78
+33.21
+
+25.36
+25.88
+26.14
+25.28
+26.06
+
+35.56
+37.68
+37.17
+35.68
+37.26
+
+Leaves Average
+29.25
+26.85
+30.00
+28.72
+28.21
+29.93
+29.19
+27.52
+28.92
+30.26
+
+Figure 4. Experimental results on image super-resolution (scaling factor: 3). From left to right: low resolution image, high resolution
+ground-truth, and reconstructed images by Bicubic [12], ScSR [27] and the proposed SCDL method.
+
+Table 2. PSNR (dB) results on image super-resolution (scaling factor = 3)
+
+Image
+
+Bicubic[12]
+ScSR[27]
+Proposed
+
+Girl
+31.24
+31.10
+31.90
+
+Butterﬂy Fence
+23.32
+20.30
+20.38
+23.84
+24.61
+20.96
+
+Starﬁsh Parthenon House Foreman Cameraman
+25.97
+26.08
+26.60
+
+22.09
+22.21
+22.89
+
+24.05
+24.06
+24.68
+
+28.55
+28.53
+29.25
+
+32.00
+32.29
+33.37
+
+Leaves Average
+21.74
+25.47
+25.60
+21.93
+22.64
+26.32
+
+method in [26] is used for comparison. The method in [26]
+actually has two steps.
+In the ﬁrst step, a nearest neigh-
+bor searching based method is used to synthesize the pho-
+to or sketch patches, as shown in the 2nd row of Fig. 5.
+In the second step, patches will be optimized with an MR-
+F post-processing framework, as shown in the 3rd row of
+Fig. 5. The MRF post-processing signiﬁcantly improves
+the results of the ﬁrst step, whereas we can still see some
+artifacts (highlighted in the last row of Fig. 5) generated
+in the incorrect patch matching process. Compared with
+the ﬁnal synthesis results reported in [26], our result seems
+over-smoothed, as shown in the 4th row of Fig. 5. How-
+ever, it should be noted that there is no complex MRF
+post-processing in our method. We simply use the aver-
+aging strategy for fusing overlapped patches. Our results
+have a large room to improve by coupling with some post-
+processing techniques.
+
+6. Conclusions
+
+In this paper, we proposed a novel semi-coupled dictio-
+nary learning (SCDL) framework for cross-style image syn-
+thesis. SCDL jointly optimizes the dictionary pair and the
+mapping function in the sparse domain. The learned dictio-
+nary pair can not only ensure the style-speciﬁc data ﬁdelity
+but also span the hidden spaces for stable mapping between
+image styles. The proposed SCDL is adapted to applica-
+tions of image super-resolution and photo-sketch synthesis,
+and shows very competitive performance with state-of-the-
+arts. In the future study, we will adapt SCDL to more types
+of image synthesis tasks and extend it to cross-style image
+recognition tasks.
+
+7. Acknowledgements
+
+This work is supported by HK RGC General Re-
+search Fund (PolyU 5375/09E) and NSFC Key Project
+(61135001).
+
+[9] M. Elad and M. Aharon.
+
+redundant representations over learned dictionaries.
+Trans on IP, 15(12):3736–3745, 2006. 2
+
+Image denoising via sparse and
+IEEE
+
+[10] J. T. Freeman W.T. and P. E.C. Example-based super-
+resolution. Computer Graphics and Applications, IEEE,
+22(2):56–65, 2002. 2
+
+[11] A. Hertzmann, C. Jacobs, N. Oliver, B. Curless, and
+In SIGGRAPH, pages 327–
+
+Image analogies.
+
+D. Salesin.
+340, 2001. 1, 2
+
+[12] R. Keys. Cubic convolution interpolation for digital image
+processing. Acoustics, Speech and Signal Processing, IEEE
+Trans on, 29(6):1153–1160, 1981. 1, 2, 6, 7
+
+[13] Z. Lei and S. Li. Coupled spectral regression for matching
+
+heterogeneous faces. In CVPR. IEEE, 2009. 1, 2
+
+[14] A. Li, S. Shan, X. Chen, and W. Gao. Maximizing intra-
+individual correlations for face recognition across pose dif-
+ferences. In CVPR. IEEE, 2009. 2
+
+[15] X. Li and M. Orchard. New edge-directed interpolation.
+
+IEEE Trans on IP, 10(10):1521–1527, 2001. 1, 2
+
+[16] D. Lin and X. Tang. Coupled space learning of image style
+
+transformation. In ICCV. IEEE, 2005. 1, 2, 3, 4
+
+[17] J. Mairal, F. Bach, J. Ponce, and G. Sapiro. Online dictionary
+
+learning for sparse coding. In ICML. ACM, 2009. 2
+
+[18] J. Mairal, F. Bach, J. Ponce, G. Sapiro, and A. Zisserman.
+In ICCV.
+
+Non-local sparse models for image restoration.
+IEEE, 2009. 5
+
+[19] J. Mairal, F. Bach, J. Ponce, G. Sapiro, and A. Zisserman.
+
+Supervised dictionary learning. NIPS, 2009. 2
+
+[20] J. Mairal, M. Elad, and G. Sapiro. Sparse representation
+for color image restoration. IEEE Trans on IP, 17(1):53–69,
+2008. 2
+
+[21] S. Mallat and G. Yu. Super-resolution with sparse mixing
+estimators. IEEE Trans on IP, 19(11):2889–2900, 2010. 1,
+2, 6, 7
+
+[22] A. Sharma and D. Jacobs. Bypassing synthesis: Pls for face
+recognition with pose, low-resolution and sketch. In CVPR.
+IEEE, 2011. 1, 2
+
+[23] J. Sun and M. Tappen. Learning non-local range markov
+random ﬁeld for image restoration. In CVPR, pages 2745–
+2752. IEEE, 2011. 5
+
+[24] X. Tang and X. Wang. Face sketch synthesis and recognition.
+
+In ICCV. IEEE, 2003. 1, 2
+
+[25] X. Wang and X. Tang. Hallucinating face by eigentransfor-
+
+mation. IEEE Trans on SMC-C, 35(3):425–434, 2005. 2
+
+[26] X. Wang and X. Tang. Face photo-sketch synthesis and
+recognition. IEEE Trans on PAMI, pages 1955–1967, 2008.
+1, 2, 6, 7, 8
+
+[27] J. Yang, J. Wright, T. Huang, and Y. Ma.
+
+resolution via sparse representation.
+19(11):2861–2873, 2010. 1, 2, 3, 6, 7
+
+Image super-
+IEEE Trans on IP,
+
+[28] M. Yang, L. Zhang, J. Yang, and D. Zhang. Metaface learn-
+ing for sparse representation based face recognition. In ICIP,
+pages 1601–1604. IEEE, 2010. 4
+
+[29] X. Zhang and X. Wu. Image interpolation by adaptive 2-d
+autoregressive modeling and soft-decision estimation. IEEE
+Trans on IP, 17(6):887–896, 2008. 1, 2, 6, 7
+
+Figure 5. Sketch-photo (left two columns) and photo-sketch (right
+two columns) synthesis. From top to bottom: input images, result-
+s by Wang et al.’s method [26] without MRF post-processing, re-
+sults by method [26] with MRF post-processing, results by SCDL,
+ground-truths and zoom-in sub-images.
+
+References
+[1] M. Aharon, M. Elad, and A. Bruckstein. K-svd: An algorith-
+m for designing overcomplete dictionaries for sparse repre-
+sentation. Signal Processing, IEEE Trans on, 54(11):4311–
+4322, 2006. 2
+
+[2] A. Beck and M. Teboulle. A fast iterative shrinkage-
+thresholding algorithm for linear inverse problems. SIAM
+Journal on Imaging Sciences, 2(1):183–202, 2009. 4
+
+[3] A. Buades, B. Coll, and J. Morel. A non-local algorithm for
+
+image denoising. In CVPR. IEEE, 2005. 5
+
+[4] K. Dabov, A. Foi, V. Katkovnik, and K. Egiazarian. Image
+denoising by sparse 3-d transform-domain collaborative ﬁl-
+tering. IEEE Trans on IP, 16(8):2080–2095, 2007. 5
+
+[5] W. Dong, L. Zhang, and G. Shi. Centralized sparse represen-
+
+tation for image restoration. In ICCV. IEEE, 2011. 2
+
+[6] W. Dong, L. Zhang, G. Shi, and X. Wu. Image deblurring
+and super-resolution by adaptive sparse domain selection
+and adaptive regularization. IEEE Trans on IP, 20(7):1838–
+1857, 2011. 2
+
+[7] B. Efron, T. Hastie, I. Johnstone, and R. Tibshirani. Least
+angle regression. The Annals of statistics, 32(2):407–499,
+2004. 4
+
+[8] A. Efros and W. T. Freeman. Image quilting for texture syn-
+
+thesis and transfer. In SIGGRAPH, 2011. 1, 2
+
